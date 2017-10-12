@@ -23,9 +23,8 @@ Array of specific URLs to ping
 ## run script
 `$ python uptime.py`
 
-## setup in Automator.app (OSX)
-1. Run Shell Script
-2. insert shell script:
+## schedule for a daily run
+Download [cronnix](https://code.google.com/archive/p/cronnix/)
+Insert following script into the cron GUI
 `$ cd {path to your repository folder}
-$ python uptime.py
-`
+$ python uptime.py`
