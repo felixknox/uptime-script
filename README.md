@@ -12,4 +12,4 @@ Python script to ping your favourite website
 ````
 
 ## run script
-`$ python uptime.py
+`$ python uptime.py`

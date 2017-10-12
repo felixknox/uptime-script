@@ -1,11 +1,8 @@
-import socket
+import socket, random, requests, json
 from urllib2 import urlopen, URLError, HTTPError
 from random import randint
 from time import sleep
 from lxml import etree
-import random
-import requests
-import json
 from pprint import pprint
 
 # timeout in seconds
@@ -28,19 +25,21 @@ def query( url ):
             print 'Response reached, but wrong status:', response.getcode()
             print 'Url:', url
 
-# urls = []
-
 def scanSitemap( url ):
-    r = requests.get(url)
-    root = etree.fromstring(r.content)
-    print "The number of sitemap tags are {0}".format(len(root))
-    for sitemap in root:
-        children = sitemap.getchildren()
-        query(children[0].text)
+    try :
+        r = requests.get(url)
+        root = etree.fromstring(r.content)
+        print "The number of sitemap tags are {0}".format(len(root))
+        for sitemap in root:
+            children = sitemap.getchildren()
+            
+            query(children[0].text)
 
-        # prevent DDOS attack behavior.. is it enough?
-        ran = random.uniform(0.5, 2)
-        sleep(ran)
+            # prevent DDOS attack behavior.. is it enough?
+            ran = random.uniform(0.5, 2)
+            sleep(ran)
+    except :
+        print "Can't get sitemap:", url
 
 # sitemaps.json is a file that shouldn't be commitet
 with open('sitemaps.json') as data_file:
@@ -48,3 +47,5 @@ with open('sitemaps.json') as data_file:
 
     for sitemap in sitemaps['sitemaps']:
         scanSitemap(sitemap)
+
+
