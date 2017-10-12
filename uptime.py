@@ -5,6 +5,8 @@ from time import sleep
 from lxml import etree
 import random
 import requests
+import json
+from pprint import pprint
 
 # timeout in seconds
 socket.setdefaulttimeout( 4 )
@@ -38,5 +40,11 @@ def scanSitemap( url ):
 
         # prevent DDOS attack behavior.. is it enough?
         ran = random.uniform(0.5, 2)
-        print ran
         sleep(ran)
+
+# sitemaps.json is a file that shouldn't be commitet
+with open('sitemaps.json') as data_file:
+    sitemaps = json.load(data_file)
+
+    for sitemap in sitemaps['sitemaps']:
+        scanSitemap(sitemap)
