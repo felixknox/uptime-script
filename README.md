@@ -1,18 +1,24 @@
 # uptime-script
 Python script to ping your favourite website
 
-## sitemaps.json
+## config.json
+create a `config.json` file:
 ````json
 {
+	"loop-time": 86400,
     "sitemaps": [
         "https://google.com/sitemap.xml",
-        ".."
+        "..."
     ],
     "urls": [
-    	"https://google.com"
+    	"https://google.com",
+    	"..."
     ]
 }
 ````
+
+## JSON:loop-time
+number of seconds before next run
 
 ## JSON:sitemap
 Needs to follow specs [<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">](http://www.sitemaps.org/schemas/sitemap/0.9)
@@ -21,10 +27,6 @@ Needs to follow specs [<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.
 Array of specific URLs to ping
 
 ## run script
-`$ python uptime.py`
-
-## schedule for a daily run
-Download [cronnix](https://code.google.com/archive/p/cronnix/)
-Insert following script into the cron GUI
 `$ cd {path to your repository folder}
 $ python uptime.py`
+Script will loop per. config.json:loop

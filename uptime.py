@@ -7,6 +7,7 @@ from lxml import etree
 # timeout in seconds
 socket.setdefaulttimeout(5)
 
+global urls
 global numTries
 global numErrors
 numErrors = 0
@@ -85,33 +86,43 @@ def scanSitemap(url) :
             children = sitemap.getchildren()
             urls.append(children[0].text)
 
-# sitemaps.json is a file that shouldn't be commitet
 urls = [];
-with open('sitemaps.json') as data_file:
-    sitemaps = json.load(data_file)
+# sitemaps.json is a file that shouldn't be commitet
+def run():
+    global urls
+    global numTries
+    with open('config.json') as config:
+        config = json.load(config)
 
-    # add urls from sitemaps
-    for sitemap in sitemaps['sitemaps']:
-        scanSitemap(sitemap)
+        # add urls from sitemaps
+        for sitemap in config['sitemaps']:
+            scanSitemap(sitemap)
 
-    # add individual urls
-    for individualUrl in sitemaps['urls']:
-        urls.append(individualUrl)
+        # add individual urls
+        for individualUrl in config['urls']:
+            urls.append(individualUrl)
 
-    for url in urls:
-        numTries = 0
-        query(url)
+        for url in urls:
+            numTries = 0
+            query(url)
 
-    # build result file and notify when build.
-    text = "Uptime done"
-    if numErrors > 0 :
-        title = "Errors detected(" + str(numErrors) + "), check log"
-    else :
-        title = "No errors detected"
+        # build result file and notify when build.
+        text = "Uptime done"
+        if numErrors > 0 :
+            title = "Errors detected(" + str(numErrors) + "), check log"
+        else :
+            title = "No errors detected"
 
-    # notify
-    os.system("""
-      osascript -e 'display notification "{}" with title "{}"'
-      """.format(title, text))
+        # notify
+        os.system("""
+          osascript -e 'display notification "{}" with title "{}"'
+          """.format(title, text))
 
+    # loop every 24 hours
+    loopTime = int(config['loop-time'])
+    print "Waiting " + str(loopTime) + " seconds before next uptime check"
+    sleep(loopTime)
+    run()
+
+run()
 
