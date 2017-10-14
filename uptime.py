@@ -118,7 +118,7 @@ def run():
           osascript -e 'display notification "{}" with title "{}"'
           """.format(title, text))
 
-    # loop every 24 hours
+    # loop every x
     loopTime = int(config['loop-time'])
     print "Waiting " + str(loopTime) + " seconds before next uptime check"
     sleep(loopTime)
