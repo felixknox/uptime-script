@@ -1,11 +1,11 @@
 # uptime-script
-Python script to ping your favourite website
+Python script to ping the URLs of your favourite websites, you can setup
 
 ## config.json
 create a `config.json` file:
 ````json
 {
-	"loop-time": 86400,
+    "loop-time": {seconds},
     "sitemaps": [
         "https://google.com/sitemap.xml",
         "..."
@@ -29,4 +29,5 @@ Array of specific URLs to ping
 ## run script
 `$ cd {path to your repository folder}
 $ python uptime.py`
-Script will loop per. config.json:loop
+
+Script will loop as defined in config.json:loop (seconds)

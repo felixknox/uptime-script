@@ -1,4 +1,4 @@
-import socket, random, requests, json, os, math
+import socket, random, requests, json, os, math, datetime
 from urllib2 import urlopen, URLError, HTTPError
 from decimal import Decimal
 from time import sleep
@@ -39,6 +39,9 @@ def query(url) :
                 query(url)
                 return
 
+    except ssl.SSLError :
+        print 'SSL failure:', str(e.reason)
+        addToErrorLog("SSL failure: " + str(e.reason) + "\nUrl: " + url)
     except URLError, e :
         print 'failure:', str(e.reason)
         addToErrorLog("Failure: " + str(e.reason) + "\nUrl: " + url)
@@ -91,6 +94,15 @@ urls = [];
 def run():
     global urls
     global numTries
+
+    # pretty print date, so we now when the last time we ran the script was.
+    mylist = []
+    today = datetime.date.today()
+    mylist.append(today)
+
+    addToErrorLog("Log date: " + str(mylist[0]))
+    print "Uptime check: " + str(mylist[0])
+
     with open('config.json') as config:
         config = json.load(config)
 
