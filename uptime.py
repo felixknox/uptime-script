@@ -1,4 +1,4 @@
-import socket, random, requests, json, os, math, datetime
+import socket, random, requests, json, os, math, datetime, ssl
 from urllib2 import urlopen, URLError, HTTPError
 from decimal import Decimal
 from time import sleep
