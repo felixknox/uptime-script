@@ -5,6 +5,11 @@ Python script to ping the URLs of your favourite websites, you can setup
 create a `config.json` file:
 ````json
 {
+    "smtp-server": "smtp.gmail.com",
+    "smtp-server": 587,
+    "smtp-user": "smtp user-name",
+    "smtp-password": "smtp password",
+
     "loop-time": {seconds},
     "sitemaps": [
         "https://google.com/sitemap.xml",
@@ -16,6 +21,18 @@ create a `config.json` file:
     ]
 }
 ````
+
+## JSON:smtp-server
+url to the mail server which to send mail from
+
+## JSON:smtp-port
+The port to the smtp server
+
+## JSON:smtp-user
+user name for smtp server
+
+## JSON:smtp-password
+password for smtp server
 
 ## JSON:loop-time
 number of seconds before next run

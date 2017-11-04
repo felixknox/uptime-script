@@ -1,5 +1,7 @@
-import socket, random, requests, json, os, math, datetime, ssl
+import socket, random, requests, json, os, math, datetime, ssl, smtplib
 from urllib2 import urlopen, URLError, HTTPError
+from email.mime.text import MIMEText
+from smtplib import SMTPException
 from decimal import Decimal
 from time import sleep
 from lxml import etree
@@ -39,19 +41,31 @@ def query(url) :
                 query(url)
                 return
 
-    except ssl.SSLError :
-        print 'SSL failure:', str(e.reason)
-        addToErrorLog("SSL failure: " + str(e.reason) + "\nUrl: " + url)
     except URLError, e :
-        print 'failure:', str(e.reason)
+        if(str(e.reason) == "timed out"):
+            # call again?
+            numTries += 1
+            if numTries < 2 :
+                sleep(timeout)
+                # try again
+                query(url)
+                return
+
+        print 'Failure:', str(e.reason)
         addToErrorLog("Failure: " + str(e.reason) + "\nUrl: " + url)
+    except ssl.SSLError, e :
+        addToErrorLog("SSL failure: " + url)
     else :
-        html = response.read()
-        if response.getcode() == 200:
-            print 'Success'
-        else:
-            print 'Response reached, but wrong status:', response.getcode()
-            addToErrorLog("Error: " + str(response.getcode()) + "\nUrl: " + url)
+        try :
+            html = response.read()
+            if response.getcode() == 200:
+                print 'Success'
+            else:
+                print 'Response reached, but wrong status:', response.getcode()
+                addToErrorLog("Error: " + str(response.getcode()) + "\nUrl: " + url)
+        except ssl.SSLError, e :
+            # print 'SSL failure:', e
+            addToErrorLog("SSL failure: " + url)
 
     # return timeout
     if math.isnan(timeout):
@@ -89,11 +103,16 @@ def scanSitemap(url) :
             children = sitemap.getchildren()
             urls.append(children[0].text)
 
+# open config file
+with open('config.json') as config:
+    config = json.load(config)
+
 urls = [];
 # sitemaps.json is a file that shouldn't be commitet
 def run():
     global urls
     global numTries
+    global config
 
     # pretty print date, so we now when the last time we ran the script was.
     mylist = []
@@ -103,32 +122,31 @@ def run():
     addToErrorLog("Log date: " + str(mylist[0]))
     print "Uptime check: " + str(mylist[0])
 
-    with open('config.json') as config:
-        config = json.load(config)
+    # add urls from sitemaps
+    for sitemap in config['sitemaps']:
+        scanSitemap(sitemap)
 
-        # add urls from sitemaps
-        for sitemap in config['sitemaps']:
-            scanSitemap(sitemap)
+    # add individual urls
+    for individualUrl in config['urls']:
+        urls.append(individualUrl)
 
-        # add individual urls
-        for individualUrl in config['urls']:
-            urls.append(individualUrl)
+    for url in urls:
+        numTries = 0
+        query(url)
 
-        for url in urls:
-            numTries = 0
-            query(url)
+    # build result file and notify when build.
+    text = "Uptime done"
+    if numErrors > 0 :
+        title = "Errors detected(" + str(numErrors) + "), check log"
+    else :
+        title = "No errors detected"
 
-        # build result file and notify when build.
-        text = "Uptime done"
-        if numErrors > 0 :
-            title = "Errors detected(" + str(numErrors) + "), check log"
-        else :
-            title = "No errors detected"
+    # notify
+    os.system("""
+      osascript -e 'display notification "{}" with title "{}"'
+      """.format(title, text))
 
-        # notify
-        os.system("""
-          osascript -e 'display notification "{}" with title "{}"'
-          """.format(title, text))
+    sendStatus()
 
     # loop every x
     loopTime = int(config['loop-time'])
@@ -137,4 +155,31 @@ def run():
     run()
 
 run()
+
+def sendStatus():
+    global config
+
+    with open("log.txt") as f:
+        msg = f.read().rstrip("\n")
+
+    sender = 'noreply@oneeyeopen.io'
+    receivers = ['felix@oneeyeopen.io']
+
+    today = datetime.date.today()
+
+    msg = MIMEText(msg)
+    msg['Content-Type'] = 'text/html'
+    msg['Subject'] = 'From: ' + str(today)
+    msg['From'] = 'Uptime robot <noreply@oneeyeopen.io>'
+    msg['To'] = 'Who ever is in charge <felix@oneeyeopen.io>'
+
+    try:
+       smtpObj = smtplib.SMTP(config["smtp-server"], int(config["smtp-port"]))
+       smtpObj.starttls()
+       smtpObj.login(str(config["smtp-user"]), str(config["smtp-password"]))
+       smtpObj.sendmail(sender, receivers, msg.as_string())
+       print "Successfully sent email"
+    except SMTPException, e:
+       print "Error: unable to send email\n"
+       print vars(e)
 
