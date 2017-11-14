@@ -6,6 +6,7 @@ from decimal import Decimal
 from time import sleep
 from lxml import etree
 
+
 # timeout in seconds
 socket.setdefaulttimeout(5)
 
@@ -18,7 +19,10 @@ def query(url) :
     global numTries
     timeout = random.uniform(2, 5)
 
-    print 'query:', url
+    # encode url
+    url = url.encode('utf-8')
+
+    print 'URL to ping:', url
 
     try :
         response = urlopen(url)
@@ -31,6 +35,7 @@ def query(url) :
             if 'retry-after' in e.headers :
                 timeout = (Decimal(e.headers["retry-after"]) / 1000) * 2
             else :
+                # should avoid domain if no retry-after header..
                 timeout = 5
             
             # call again?
@@ -87,6 +92,35 @@ def addToErrorLog(message) :
     with open('log.txt', 'a') as f:
         f.write(message + '\n---\n')
 
+# send email status
+def sendStatus() :
+    global config
+
+    with open("log.txt") as f:
+        msg = f.read().rstrip("\n")
+
+    sender = 'noreply@oneeyeopen.io'
+    receivers = ['felix@oneeyeopen.io']
+
+    today = datetime.date.today()
+
+    msg = MIMEText(msg)
+    msg['Content-Type'] = 'text/html'
+    msg['Subject'] = 'From: ' + str(today)
+    msg['From'] = 'Uptime robot <noreply@oneeyeopen.io>'
+    msg['To'] = 'Who ever is in charge <felix@oneeyeopen.io>'
+
+    try:
+       smtpObj = smtplib.SMTP(config["smtp-server"], int(config["smtp-port"]))
+       smtpObj.starttls()
+       smtpObj.login(str(config["smtp-user"]), str(config["smtp-password"]))
+       smtpObj.sendmail(sender, receivers, msg.as_string())
+       print "Successfully sent email"
+    except SMTPException, e:
+       print "Error: unable to send email\n"
+       print vars(e)
+
+
 # sitemap fetching and parsing
 def scanSitemap(url) :
     root = None
@@ -98,7 +132,7 @@ def scanSitemap(url) :
         addToErrorLog("Can't get sitemap: " + url)
 
     if root != None:
-        print "The number of sitemap tags are {0}".format(len(root))
+        print "The number of sitemap tags for " + url + " are {0}".format(len(root))
         for sitemap in root:
             children = sitemap.getchildren()
             urls.append(children[0].text)
@@ -146,6 +180,7 @@ def run():
       osascript -e 'display notification "{}" with title "{}"'
       """.format(title, text))
 
+    # send status as e-mail
     sendStatus()
 
     # loop every x
@@ -155,31 +190,4 @@ def run():
     run()
 
 run()
-
-def sendStatus():
-    global config
-
-    with open("log.txt") as f:
-        msg = f.read().rstrip("\n")
-
-    sender = 'noreply@oneeyeopen.io'
-    receivers = ['felix@oneeyeopen.io']
-
-    today = datetime.date.today()
-
-    msg = MIMEText(msg)
-    msg['Content-Type'] = 'text/html'
-    msg['Subject'] = 'From: ' + str(today)
-    msg['From'] = 'Uptime robot <noreply@oneeyeopen.io>'
-    msg['To'] = 'Who ever is in charge <felix@oneeyeopen.io>'
-
-    try:
-       smtpObj = smtplib.SMTP(config["smtp-server"], int(config["smtp-port"]))
-       smtpObj.starttls()
-       smtpObj.login(str(config["smtp-user"]), str(config["smtp-password"]))
-       smtpObj.sendmail(sender, receivers, msg.as_string())
-       print "Successfully sent email"
-    except SMTPException, e:
-       print "Error: unable to send email\n"
-       print vars(e)
 
